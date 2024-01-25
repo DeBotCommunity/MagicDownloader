@@ -7,6 +7,7 @@ import json
 
 import aiohttp
 from telethon import events
+from pytube import YouTube
 
 from userbot import client
 
@@ -29,9 +30,16 @@ class CobaltModule:
         return size_b / (1024 * 1024) < 50
 
     async def download(self, link):
-        data = {"url":link,"aFormat":"mp3","dubLang":False,"vQuality":"1080","isNoTTWatermark":True}
-        url = await self.get_download_link(data)
-        return await self.download_media_file(str(url))
+        if not 'youtube.com' in link:
+            data = {"url": link, "aFormat": "mp3", "dubLang": False, "vQuality": "1080", "isNoTTWatermark": True}
+            url = await self.get_download_link(data)
+            return await self.download_media_file(str(url))
+        else:
+            yt = YouTube(link)
+            stream = yt.streams.first()
+            content = stream.download()
+            if await self.check_bytes_count(len(content)):
+                return content
     
 
     async def download_media_file(self, url):
@@ -61,6 +69,6 @@ async def save(event: events.NewMessage.Event):
         await client.send_message(f'🔴 Не удалось скачать файл по ссылке: <code>{link}</code>')
     if content != False:
         try:
-            await client.send_file(entity=event.chat_id ,file=await client.upload_file(file=content, file_name='video.mp4'), video_note=True)
+            await client.send_file(entity=event.chat_id, file=await client.upload_file(file=content, file_name='video.mp4'), video_note=True)
         except:
             pass
